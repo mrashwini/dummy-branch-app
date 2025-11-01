@@ -1,0 +1,33 @@
+{
+    "cSpell.words": [
+        "aquasecurity",
+        "branchloans",
+        "Buildx",
+        "devdb",
+        "devpass",
+        "devuser",
+        "DOCKERHUB",
+        "gunicorn",
+        "healthcheck",
+        "isready",
+        "jsonlogger",
+        "levelname",
+        "libpq",
+        "logfile",
+        "pgdata",
+        "proddb",
+        "prodpass",
+        "produser",
+        "psycopg",
+        "pydantic",
+        "pytest",
+        "PYTHONDONTWRITEBYTECODE",
+        "pythonjsonlogger",
+        "PYTHONPATH",
+        "PYTHONUNBUFFERED",
+        "stagedb",
+        "stagepass",
+        "stageuser",
+        "wsgi"
+    ]
+}

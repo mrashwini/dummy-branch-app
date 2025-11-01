@@ -1,18 +1,73 @@
-from flask import Flask
+from flask import Flask, request, jsonify
+from prometheus_flask_exporter import PrometheusMetrics
+from config import Config  # ✅ removed leading dot for better import
+import logging
+from pythonjsonlogger import jsonlogger
+import psycopg2
 
-from .config import Config
 
-def create_app() -> Flask:
+def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config())
+    app.config.from_object(Config)
 
-    # Lazy imports to avoid circular deps during app init
-    from .routes.health import bp as health_bp
-    from .routes.loans import bp as loans_bp
-    from .routes.stats import bp as stats_bp
+    # -----------------------------
+    # JSON Structured Logging Setup
+    # -----------------------------
+    handler = logging.StreamHandler()
+    formatter = jsonlogger.JsonFormatter("%(asctime)s %(levelname)s %(message)s")
+    handler.setFormatter(formatter)
 
-    app.register_blueprint(health_bp)
-    app.register_blueprint(loans_bp, url_prefix="/api")
-    app.register_blueprint(stats_bp, url_prefix="/api")
+    app.logger.addHandler(handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info("🪵 Logging initialized with JSON formatter")
 
+    # -----------------------------
+    # Prometheus Metrics Setup
+    # -----------------------------
+    metrics = PrometheusMetrics(app, path="/metrics")
+    metrics.info("app_info", "Application info", version="1.0.1")
+
+    # Custom request counter
+    @metrics.counter(
+        "http_request_count_total",
+        "Total HTTP requests",
+        labels={"method": lambda: request.method, "endpoint": lambda: request.path},
+    )
+    def before_request():
+        pass
+
+    # -----------------------------
+    # Health check route
+    # -----------------------------
+    @app.route("/health", methods=["GET"])
+    def health():
+        """Health check for app and database."""
+        try:
+            db_uri = app.config["SQLALCHEMY_DATABASE_URI"].replace(
+                "postgresql+psycopg2", "postgresql"
+            )
+            conn = psycopg2.connect(db_uri, connect_timeout=3)
+            conn.close()
+            app.logger.info("Database connection successful")
+            return jsonify({"status": "healthy"}), 200
+        except Exception as e:
+            app.logger.error(f"❌ Database health check failed: {e}")
+            return jsonify({"status": "unhealthy", "error": str(e)}), 500
+
+    # -----------------------------
+    # Root route for basic test
+    # -----------------------------
+    @app.route("/", methods=["GET"])
+    def index():
+        return jsonify({"message": "Flask Monitoring App Running 🚀"}), 200
+
+    app.logger.info("✅ Flask app started successfully and Prometheus metrics enabled")
     return app
+
+
+# --------------------------------
+# Run directly for local testing
+# --------------------------------
+if __name__ == "__main__":
+    app = create_app()
+    app.run(host="0.0.0.0", port=8000)
