@@ -57,4 +57,4 @@ curl -X POST http://localhost:8000/api/loans \
 ## Notes
 
 - Amounts are validated server-side (0 < amount ≤ 50000).
-- No authentication for this prototype.
+- No authentication for this prototype.# flask-observability-challenge
