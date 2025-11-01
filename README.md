@@ -59,3 +59,108 @@ curl -X POST http://localhost:8000/api/loans \
 - Amounts are validated server-side (0 < amount ≤ 50000).
 - No authentication for this prototype.
 
+
+---
+## 🔧 Developer Documentation (By Ashwini)
+
+
+1️⃣ Clone the Repository
+git clone https://github.com/yourusername/loan-service.git
+cd loan-service
+2️⃣ Create an Environment File
+Create .env.production in the root directory:
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin
+POSTGRES_DB=loan_db
+DB_PORT=5432
+API_PORT=8000
+DATABASE_URL=postgresql+psycopg2://admin:admin@db:5432/loan_db
+API_CMD=flask run --host=0.0.0.0 --port=8000
+3️⃣ Run Docker Compose
+docker-compose up --build
+4️⃣ Verify the Setup
+Service	URL	Description
+Flask API	http://localhost:8000/health
+Health Check
+Prometheus	http://localhost:9090	Metrics Explorer
+Grafana	http://localhost:3030	Metrics Dashboard
+Nginx	http://localhost
+Reverse Proxy
+________________________________________
+🧩 How to Switch Between Environments
+You can switch between environments by modifying the .env file or creating new ones:
+Environment	File	Purpose
+Development	.env.dev	Local development, debug enabled
+Staging	.env.staging	Pre-production testing
+Production	.env.production	Live deployment
+To switch:
+cp .env.staging .env
+docker-compose up --build
+Each environment can have its own DATABASE_URL, LOG_LEVEL, and DEBUG configuration.
+________________________________________
+🔑 Environment Variables Explained
+Variable	Description
+POSTGRES_USER	Database username
+POSTGRES_PASSWORD	Database password
+POSTGRES_DB	PostgreSQL database name
+DB_PORT	Exposed database port
+API_PORT	Port for Flask API
+DATABASE_URL	SQLAlchemy connection string
+API_CMD	Command to start Flask
+LOG_LEVEL	Logging verbosity (INFO, DEBUG, etc.)
+________________________________________
+⚙️ CI/CD Pipeline Overview
+(Assuming GitHub Actions or similar)
+1.	Build Stage:
+o	Lint and test the Flask app.
+o	Validate Dockerfile and docker-compose syntax.
+2.	Test Stage:
+o	Run Flask unit tests in an isolated container.
+3.	Deploy Stage:
+o	Push the Docker image to a registry (e.g., Docker Hub).
+o	Automatically deploy to a server or cloud container environment.
+Example GitHub Action (.github/workflows/ci.yml):
+name: CI/CD Pipeline
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker image
+        run: docker-compose build
+      - name: Run tests
+        run: docker-compose run api pytest
+________________________________________
+🏗️ Architecture Diagram
+                   ┌───────────────────────────────┐
+                   │         User / Client          │
+                   └───────┬───────────────────────┘
+                           │
+                      (HTTP Requests)
+                           │
+                   ┌───────▼──────────────────────┐
+                   │          NGINX Proxy         │
+                   └───────┬──────────────────────┘
+                           │
+                   ┌───────▼──────────────────────┐
+                   │          Flask API           │
+                   │ (Health, Metrics, Loans API) │
+                   └───────┬──────────────────────┘
+                           │
+                   ┌───────▼──────────────────────┐
+                   │         PostgreSQL DB        │
+                   └──────────────────────────────┘
+                           │
+                   ┌───────▼──────────────────────┐
+                   │         Prometheus           │
+                   │ (Scrapes /metrics endpoint)  │
+                   └───────┬──────────────────────┘
+                           │
+                   ┌───────▼──────────────────────┐
+                   │          Grafana             │
+                   │ (Visualize Metrics & Logs)   │
+                   └──────────────────────────────┘
+________________________________________
